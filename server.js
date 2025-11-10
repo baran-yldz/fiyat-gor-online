@@ -14,7 +14,7 @@ app.use(express.json());
 const PORT = 3000;
 
 const API_BASE = process.env.API_BASE;
-const apiUrl = process.env.SQL_API_URL;
+const apiUrl = process.env.SQL_API_URL || process.env.API_URL;
 const firmaKodu = process.env.FIRMA_KODU;
 const calismaYili = process.env.CALISMA_YILI;
 const apiKey = process.env.API_KEY;
@@ -158,7 +158,7 @@ app.get("/env-test", (req, res) => {
 
   res.json({
     API_BASE: mask(process.env.API_BASE),
-    SQL_API_URL: mask(process.env.SQL_API_URL),
+    SQL_API_URL: mask(process.env.SQL_API_URL || process.env.API_URL),
     API_KEY: mask(process.env.API_KEY),
     FIRMA_KODU: process.env.FIRMA_KODU || "undefined",
     CALISMA_YILI: process.env.CALISMA_YILI || "undefined",
