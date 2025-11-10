@@ -21,7 +21,7 @@ const apiKey = process.env.API_KEY;
 const kullaniciKodu = process.env.KULLANICI_KODU;
 const firmaNo = process.env.FIRMA_NO;
 const subeNo = process.env.SUBE_NO;
-const dbsifre  = process.env.SIFRE;
+const dbsifre = process.env.SIFRE;
 
 // ---------- helpers ----------
 function generateDailyHash() {
@@ -120,9 +120,9 @@ app.post("/getProduct", async (req, res) => {
       SQLSorgu: sqlQuery,
     };
 
-    const apiUrl = apiUrl;
+    const url = apiUrl;
 
-    const response = await fetch(apiUrl, {
+    const response = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json; charset=utf-8",
@@ -149,6 +149,23 @@ app.post("/getProduct", async (req, res) => {
     console.error("💥 Hata:", err);
     res.status(500).json({ error: err.message });
   }
+});
+
+// ✅ Güvenli environment test endpoint
+app.get("/env-test", (req, res) => {
+  const mask = (v) =>
+    v ? v.slice(0, 5) + "...(" + v.length + " chars)" : "undefined";
+
+  res.json({
+    API_BASE: mask(process.env.API_BASE),
+    SQL_API_URL: mask(process.env.SQL_API_URL),
+    API_KEY: mask(process.env.API_KEY),
+    FIRMA_KODU: process.env.FIRMA_KODU || "undefined",
+    CALISMA_YILI: process.env.CALISMA_YILI || "undefined",
+    KULLANICI_KODU: process.env.KULLANICI_KODU || "undefined",
+    FIRMA_NO: process.env.FIRMA_NO || "undefined",
+    SUBE_NO: process.env.SUBE_NO || "undefined",
+  });
 });
 
 app.listen(PORT, async () => {
