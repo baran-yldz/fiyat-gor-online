@@ -77,29 +77,9 @@ app.post("/getProduct", async (req, res) => {
 
     const sifre = generateDailyHash();
 
-    const sqlQueryBase = `SELECT T.stok_kodu, T.stok_isim, T.barkod, T.birim, T.fiyat, T.deposirano, ISNULL(M.MevcutMiktar, 0) AS MevcutMiktar FROM ( SELECT STOKLAR.sto_kod AS stok_kodu,
-                          STOKLAR.sto_isim AS stok_isim, BARKOD_TANIMLARI.bar_kodu AS barkod,
-                          STOK_SATIS_FIYAT_LISTELERI.sfiyat_birim_pntr AS birim,
-                          STOK_SATIS_FIYAT_LISTELERI.sfiyat_fiyati AS fiyat,
-                          STOK_SATIS_FIYAT_LISTELERI.sfiyat_deposirano AS deposirano
-                          FROM BARKOD_TANIMLARI
-                          JOIN STOKLAR ON BARKOD_TANIMLARI.bar_stokkodu = STOKLAR.sto_kod
-                          JOIN STOK_SATIS_FIYAT_LISTELERI ON STOK_SATIS_FIYAT_LISTELERI.sfiyat_stokkod = STOKLAR.sto_kod
-                          ) AS T
-                          LEFT JOIN (
-                            SELECT 
-                              H.sth_stok_kod AS stok_kodu,
-                              SUM(CASE 
-                                WHEN H.sth_tip IN (0,2) THEN H.sth_miktar
-                                WHEN H.sth_tip = 1 THEN -H.sth_miktar
-                                ELSE 0 
-                              END) AS MevcutMiktar
-                            FROM [dbo].[STOK_HAREKETLERI] AS H
-                            GROUP BY H.sth_stok_kod
-                          ) AS M
-                          ON T.stok_kodu = M.stok_kodu
-                          WHERE T.barkod = '@BARCODE@'
-                          `;
+    const sqlQueryBase = `
+SELECT DISTINCT M.stok_kodu, T.stok_isim, T.barkod, T.birim, M.depo_kodu, D.dep_adi AS depo_adi, ISNULL(T.fiyat, 0) AS fiyat, ISNULL(M.MevcutMiktar, 0) AS MevcutMiktar FROM (SELECT H.sth_stok_kod AS stok_kodu, CASE WHEN H.sth_tip IN (0,2) THEN H.sth_giris_depo_no WHEN H.sth_tip = 1 THEN H.sth_cikis_depo_no END AS depo_kodu, SUM(CASE WHEN (H.sth_tip = 0) OR ((H.sth_tip = 2) AND (H.sth_giris_depo_no <> H.sth_cikis_depo_no)) AND (H.sth_giris_depo_no IS NOT NULL) THEN H.sth_miktar WHEN (H.sth_tip = 1) OR ((H.sth_tip = 2) AND (H.sth_giris_depo_no <> H.sth_cikis_depo_no)) AND (H.sth_cikis_depo_no IS NOT NULL) THEN -H.sth_miktar ELSE 0 END) AS MevcutMiktar FROM STOK_HAREKETLERI AS H WITH (NOLOCK) WHERE (NOT (H.sth_cins IN (9,15))) GROUP BY H.sth_stok_kod, CASE WHEN H.sth_tip IN (0,2) THEN H.sth_giris_depo_no WHEN H.sth_tip = 1 THEN H.sth_cikis_depo_no END) AS M LEFT JOIN (SELECT STOKLAR.sto_kod AS stok_kodu, STOKLAR.sto_isim AS stok_isim, (SELECT TOP 1 bar_kodu FROM BARKOD_TANIMLARI WHERE bar_stokkodu = STOKLAR.sto_kod ORDER BY bar_kodu) AS barkod, STOK_SATIS_FIYAT_LISTELERI.sfiyat_birim_pntr AS birim, STOK_SATIS_FIYAT_LISTELERI.sfiyat_fiyati AS fiyat, STOK_SATIS_FIYAT_LISTELERI.sfiyat_deposirano AS deposirano FROM STOKLAR JOIN STOK_SATIS_FIYAT_LISTELERI ON STOK_SATIS_FIYAT_LISTELERI.sfiyat_stokkod = STOKLAR.sto_kod) AS T ON M.stok_kodu = T.stok_kodu AND M.depo_kodu = T.deposirano LEFT JOIN DEPOLAR AS D ON M.depo_kodu = D.dep_no WHERE T.barkod = '075656016804' OR M.stok_kodu = (SELECT bar_stokkodu FROM BARKOD_TANIMLARI WHERE bar_kodu = '@BARCODE@')
+`;
 
     // 👇 barcode'u güvenli şekilde sorguya ekle
     const sqlQuery = sqlQueryBase.replace(
