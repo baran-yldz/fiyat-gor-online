@@ -87,7 +87,7 @@ async function loginToAPI() {
     // login body formatı talimatına göre
     const body = {
         FirmaKodu: firmaKodu,
-        CalismaYili: calismaYil,
+        CalismaYili: calismaYili,
         ApiKey: apiKey,
         KullaniciKodu: kullaniciKodu,
         Sifre: sifre,
